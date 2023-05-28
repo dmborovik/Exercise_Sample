@@ -1,5 +1,10 @@
 
 Vagrant.configure("2") do |config|
+
+  #коробка на Vagran Cloud. 
   config.vm.box = "borovikphone/centos7-kernel6"
+  #Shared folder, используя rsync. Со стандартной шарой пока не разобрался, после установки "нестандартного" ядра, вохнгикли сложности с установкой Guest Additions
+  #Быстро разобраться пока времени не хватает. Если разберусь, коробку обновлю. 
   config.vm.synced_folder ".", "/vagrant", type: "rsync"
+  
 end
