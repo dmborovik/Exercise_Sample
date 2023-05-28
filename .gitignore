@@ -1,0 +1,3 @@
+*.box
+.vagrant
+vb-guest-additions.sh
