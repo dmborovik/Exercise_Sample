@@ -23,3 +23,5 @@ echo "/dev/mapper/VolGroup00-LogVol_Home /home xfs defaults 0 0">>/etc/fstab
 
 #Монтируем все 
 mount -a
+
+echo "Profit!" 
