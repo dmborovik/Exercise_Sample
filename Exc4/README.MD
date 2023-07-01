@@ -237,7 +237,7 @@ NAME     PROPERTY  VALUE      SOURCE
 newpart  checksum  sha256     local
 </pre>
 
-<h2>3. Найти сообщение<h2>
+<h2>3. Найти сообщение</h2>
 
 <p>Копируем необходимы файл с именем test.file</p>
 <p>Восстанавливаем скачаный снап</p>
