@@ -18,20 +18,20 @@ echo "ALERT" > /var/log/logview.log
 </pre>
 </li>
 <li>
-Создаем скрипт, который будет отправлять информацию из нашего лога в /var/log/messages. (см. <a href="https://github.com/dmborovik/Exercise_Sample/blob/3048d4df5aab464a7320487982524e92c47bf8a2/Exc8/logview.sh">logview.sh</a> ) И даем разрешение на запуск. 
+Создаем скрипт, который будет отправлять информацию из нашего лога в /var/log/messages. (см. <a href="logview.sh">logview.sh</a> ) И даем разрешение на запуск. 
 <pre>
 vi /opt/logview.sh
 chmod +x /opt/logview.sh
 </pre>
 </li>
 <li>
-Создаем сервис (или юнит). Файл logview.service
+Создаем сервис (или юнит). Файл <a href="logview.service">logview.service</a>
 <pre>
 vi /etc/systemd/system/logview.service
 </pre>
 </li>
 <li>
-Создаем таймер (см.logview.time)
+Создаем таймер (см.<a href="logview.timer">logview.time</a>)
 <pre>
 vi /etc/systemd/system/logview.time
 </pre>
