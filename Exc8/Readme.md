@@ -122,3 +122,69 @@ Jul 15 19:03:31 localhost.localdomain systemd[1]: Starting Spawn-fcgi st...
 Hint: Some lines were ellipsized, use -l to show in full.
 </pre>
 </ul>
+
+<h2>Дополнить unit-файл httpd возможностью запустить несколько инстансов сервера с разными конфиурационными файлами.</h2>
+
+<p>Для запуска нескольких экземпляров сервиса будем использовать шаблонизацию. Шаблон возьмем из /usr/lib/systemd/system/
+<pre>cp /usr/lib/systemd/system/httpd.service /etc/systemd/system
+mv /etc/systemd/system/httpd.service /etc/systemd/system/httpd@.service
+</pre> 
+<p>Добавляем шаблон подстановки в строку EnvironmentFile. (см. <a href="httpd@.service"><i>httpd@.service</i></a>)
+
+<p>В самом файле окружения (которых будет два) задается опция для запуска веб-сервера с необходимым конфигурационным файлом
+<pre>
+echo "OPTIONS=-f conf/first.conf" >> /etc/sysconfig/httpd-first
+echo "OPTIONS=-f conf/second.conf" >> /etc/sysconfig/httpd-second
+</pre>
+</p>
+<p>
+В директории с конфигами httpd должны лежать два конфига, в нашем случае это будут <a href="first.conf"><i>first.conf</a></i> и <a href="second.conf"><i>second.conf</a></i>.
+</p>
+<p>Для удачного запуска, в конфигурационных файлах должны бытя указаны уникальные для каждого экземпляра опции Listen и PidFile. Конфиги можно скопировать и поправить только второй, в нем должны быть след опции: PidFile /var/run/httpd-second.pid - т.е. должен быть указан файл пида Listen 8080 - указан порт, который будет отличаться от другого инстанса</p>
+
+<pre>systemctl status httpd@first
+<span style="color:#26A269"><b>●</b></span> httpd@first.service - The Apache HTTP Server
+   Loaded: loaded (/etc/systemd/system/httpd@.service; disabled; vendor preset: disabled)
+   Active: <span style="color:#26A269"><b>active (running)</b></span> since Sat 2023-07-15 20:57:45 UTC; 15s ago
+     Docs: man:httpd(8)
+           man:apachectl(8)
+ Main PID: 4038 (httpd)
+   Status: &quot;Total requests: 0; Current requests/sec: 0; Current traffic:   0 B/sec&quot;
+   CGroup: /system.slice/system-httpd.slice/httpd@first.service
+           ├─4038 /usr/sbin/httpd -f conf/first.conf -DFOREGROUND
+           ├─4039 /usr/sbin/httpd -f conf/first.conf -DFOREGROUND
+           ├─4040 /usr/sbin/httpd -f conf/first.conf -DFOREGROUND
+           ├─4041 /usr/sbin/httpd -f conf/first.conf -DFOREGROUND
+           ├─4042 /usr/sbin/httpd -f conf/first.conf -DFOREGROUND
+           ├─4043 /usr/sbin/httpd -f conf/first.conf -DFOREGROUND
+           └─4044 /usr/sbin/httpd -f conf/first.conf -DFOREGROUND
+
+Jul 15 20:57:45 localhost.localdomain systemd[1]: Starting The Apache HT...
+Jul 15 20:57:45 localhost.localdomain httpd[4038]: AH00558: httpd: Could...
+Jul 15 20:57:45 localhost.localdomain systemd[1]: Started The Apache HTT...
+Hint: Some lines were ellipsized, use -l to show in full.
+</pre>
+
+<pre>ystemctl status httpd@second.service 
+<span style="color:#26A269"><b>●</b></span> httpd@second.service - The Apache HTTP Server
+   Loaded: loaded (/etc/systemd/system/httpd@.service; disabled; vendor preset: disabled)
+   Active: <span style="color:#26A269"><b>active (running)</b></span> since Sat 2023-07-15 20:57:49 UTC; 35s ago
+     Docs: man:httpd(8)
+           man:apachectl(8)
+ Main PID: 4051 (httpd)
+   Status: &quot;Total requests: 0; Current requests/sec: 0; Current traffic:   0 B/sec&quot;
+   CGroup: /system.slice/system-httpd.slice/httpd@second.service
+           ├─4051 /usr/sbin/httpd -f conf/second.conf -DFOREGROUND
+           ├─4052 /usr/sbin/httpd -f conf/second.conf -DFOREGROUND
+           ├─4053 /usr/sbin/httpd -f conf/second.conf -DFOREGROUND
+           ├─4054 /usr/sbin/httpd -f conf/second.conf -DFOREGROUND
+           ├─4055 /usr/sbin/httpd -f conf/second.conf -DFOREGROUND
+           ├─4056 /usr/sbin/httpd -f conf/second.conf -DFOREGROUND
+           └─4057 /usr/sbin/httpd -f conf/second.conf -DFOREGROUND
+
+Jul 15 20:57:49 localhost.localdomain systemd[1]: Starting The Apache HT...
+Jul 15 20:57:49 localhost.localdomain httpd[4051]: AH00558: httpd: Could...
+Jul 15 20:57:49 localhost.localdomain systemd[1]: Started The Apache HTT...
+Hint: Some lines were ellipsized, use -l to show in full.
+</pre>
+<p>
