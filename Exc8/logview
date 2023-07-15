@@ -1,0 +1,5 @@
+# Файл конфигурации для сервиса logview
+# Расположить в /etc/sysconfig
+
+WORD="ALERT"
+LOG=/var/log/logview.log

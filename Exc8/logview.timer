@@ -1,0 +1,8 @@
+[Unit]
+Description=Run logview script every 30 second
+[Timer]
+OnUnitActiveSec=30
+Unit=logview.service
+
+[Install]
+WantedBy=multi-user.target

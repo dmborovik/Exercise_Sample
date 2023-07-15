@@ -1,0 +1,7 @@
+[UNIT]
+Description=My service for view log
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/sysconfig/logview
+ExecStart=/opt/logview.sh $WORD $LOG
