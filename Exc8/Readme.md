@@ -18,7 +18,7 @@ echo "ALERT" > /var/log/logview.log
 </pre>
 </li>
 <li>
-Создаем скрипт, который будет отправлять информацию из нашего лога в /var/log/messages. (см. <a href="https://github.com/dmborovik/Exercise_Sample/blob/3048d4df5aab464a7320487982524e92c47bf8a2/Exc8/logview.sh>logview.sh</a> ) И даем разрешение на запуск. 
+Создаем скрипт, который будет отправлять информацию из нашего лога в /var/log/messages. (см. <a href="https://github.com/dmborovik/Exercise_Sample/blob/3048d4df5aab464a7320487982524e92c47bf8a2/Exc8/logview.sh">logview.sh</a> ) И даем разрешение на запуск. 
 <pre>
 vi /opt/logview.sh
 chmod +x /opt/logview.sh
