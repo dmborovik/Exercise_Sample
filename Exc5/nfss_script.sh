@@ -2,9 +2,7 @@
 
 yum -y install nfs-utils
 systemctl enable firewalld.service --now
-firewall-cmd --add-service="nfs3" --permanent
-firewall-cmd --add-service="rpc-bind" --permanent
-firewall-cmd --add-service="mountd" --permanent
+firewall-cmd --add-service={nfs,mountd,rpc-bind} --permanent
 firewall-cmd --reload
 systemctl enable nfs --now
 mkdir -p /srv/share/upload

@@ -1,4 +1,4 @@
-[UNIT]
+[Unit]
 Description=My service for view log
 
 [Service]

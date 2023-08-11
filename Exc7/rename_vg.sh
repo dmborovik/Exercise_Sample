@@ -7,6 +7,8 @@ sed -i "s|VolGroup00|vg_root|g" /etc/fstab /etc/default/grub /boot/grub2/grub.cf
 mkinitrd -f -v /boot/initramfs-$(uname -r).img $(uname -r)
 echo 'Profit!'
 
+#--------------###------------###-----------###---------------###
+
 #Добавление модуля в initrd
 mkdir -p /usr/lib/dracut/modules.d/01test/
 
