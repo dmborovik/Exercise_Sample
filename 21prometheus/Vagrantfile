@@ -1,0 +1,29 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "centos/7"
+  config.vm.synced_folder "./config", "/vagrant", type: "rsync"
+  config.vm.provider "virtualbox" do |v|
+    v.memory=256
+  end
+
+  config.vm.define "prometheus" do |pm|
+    pm.vm.hostname = "prometheus"
+    pm.vm.network "forwarded_port", guest: 9090, host: 9090
+    pm.vm.network "forwarded_port", guest: 3000, host: 3000
+    pm.vm.provision :shell, :path=>"./Install/InstallPrometheus.sh"
+    pm.vm.network "private_network", ip: "192.168.50.10", virtualbox__intnet: "dns"
+    
+  end
+
+  config.vm.define "host" do |hs|
+    hs.vm.hostname = "host"
+    hs.vm.network "private_network", ip: "192.168.50.15", virtualbox__intnet: "dns"
+    hs.vm.provision :shell, :path=> "./Install/InstallNode.sh"
+    hs.vm.network "forwarded_port", guest: 9100, host: 9100
+  end
+
+  
+end
