@@ -1,0 +1,95 @@
+---
+- name: ConfigInetRouter
+  hosts: all
+  become: true
+
+  tasks:
+
+    - name: SetUP NAT
+      block:
+        - name: install iptables
+          yum:
+            name:
+            - iptables
+            - iptables-services
+            state: present
+            update_cache: yes
+        - name: copy iptables config
+          template:
+            src: ./templates/iptables
+            dest: /etc/sysconfig/iptables
+            owner: root
+            group: root
+            mode: 0600
+        - name: start and enable iptables
+          service:
+            name: iptables
+            state: restarted
+            enabled: true
+      when: ansible_hostname == "inetRouter"
+    
+    - name: Set up routers
+      sysctl: 
+        name: net.ipv4.conf.all.forwarding
+        value: '1'
+        state: present
+      when: "'routers' in group_names"
+
+    - name: disable default route
+      lineinfile:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+        line: DEFROUTE=NO
+      when: "'OSCentOS' in group_names"
+
+    - name: default gateway for connected to inetRouter
+      lineinfile:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+        line: GATEWAY=192.168.255.1
+      when: 
+        - inventory_hostname in groups["ToInetRouter"]
+        - ansible_facts['os_family'] == "RedHat"
+
+    - name: default gateway for connected to centralRouter
+      lineinfile:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+        line: GATEWAY=192.168.0.1
+      when: 
+        - inventory_hostname in groups["ToCentralRouter"]
+        - ansible_facts['os_family'] == "RedHat"
+
+    - name: SetUP route
+      block:
+      
+      - name: set up route on office1Server
+        template: 
+          src: ./templates/office1Server.j2
+          dest: /etc/netplan/50-vagrant.yaml
+          owner: root
+          group: root
+          mode: 0644
+        when: 
+          - ansible_hostname == "office1Server"
+      
+      - name: set up route on office2Server
+        template:
+          src: ./templates/office2Server.j2
+          dest: /etc/network/interfaces
+          owner: root
+          group: root
+          mode: 0644
+        when:  
+        - ansible_hostname == "office2Server"
+      
+      - name: set up rote on centralRouter eth1
+        template:
+          src: ./templates/centralRouter.j2
+          dest: /etc/sysconfig/network-scripts/route-eth1
+          owner: root
+          group: root
+          mode: 0644
+        when: 
+        - ansible_hostname == "centralRouter"
+
+    
+
+
