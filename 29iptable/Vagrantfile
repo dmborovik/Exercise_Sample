@@ -1,0 +1,54 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+    #InetRouter VM
+    config.vm.define "inetRouter" do |ir|
+       ir.vm.box='centos/7' 
+       ir.vm.host_name='inetRouter'
+       ir.vm.network :private_network, ip: "192.168.255.1", netmask: "255.255.255.240", virtualbox__intnet: 'net_route'
+       ir.vm.network :private_network, ip: "192.168.56.2", adapter: 3
+    end
+
+
+    # CentralRouter
+    config.vm.define "CentralRouter" do |cr|
+        cr.vm.box='centos/7'
+        cr.vm.host_name='CentralRouter'
+        cr.vm.network :private_network, ip: "192.168.255.2", netmask: "255.255.255.240", virtualbox__intnet: "net_route"
+        cr.vm.network :private_network, ip: "192.168.0.1", netmask: "255.255.255.240", virtualbox__intnet: "central_net"
+        cr.vm.network :private_network, ip: "192.168.56.3", adapter: 8
+    end
+
+    #inetRouter2
+    config.vm.define "inetRouter2" do |ir2|
+        ir2.vm.box='centos/7'
+        ir2.vm.host_name='inetRouter2'
+        ir2.vm.network :private_network, ip: "192.168.255.3", netmask: "255.255.255.240", virtualbox__intnet: 'net_route'
+        ir2.vm.network :private_network, ip: "192.168.56.4", adapter: 3
+        #Проброс порта
+        ir2.vm.network "forwarded_port", guest: 8080, host: 2345, host_ip: "127.0.0.1", id: 'irouter2'
+    end
+
+    #centralServer
+    config.vm.define "CentralServer" do |cs|
+        cs.vm.box='centos/7'
+        cs.vm.host_name='CentralServer'
+        cs.vm.network :private_network, ip: "192.168.0.2", netmask: "255.255.255.240", virtualbox__intnet: "central_net"
+        cs.vm.network :private_network, ip: "192.168.56.5", adapter: 3
+    end
+
+    config.vm.provision "shell", inline: <<-SHELL
+     sed -i '65s/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+     systemctl restart sshd
+    SHELL
+
+    
+
+
+end
+
+  

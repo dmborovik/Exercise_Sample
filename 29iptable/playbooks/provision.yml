@@ -1,0 +1,153 @@
+---
+
+- name: Configure Demonstrate work iptables
+  hosts: all
+  become: true
+#Настройки на всех хостах
+  tasks:
+    - name: set ip forwarding
+      sysctl:
+        name: net.ipv4.conf.all.forwarding
+        value: 1
+        sysctl_set: yes
+        state: present
+        reload: yes
+
+    - name: install package
+      yum:
+        name:
+          - iptables
+          - iptables-services
+          - nmap
+        state: present
+        update_cache: true
+
+    - name: Start iptables
+      service:
+        name: iptables
+        state: started
+        enabled: true
+
+#Настройка inetRouter
+- name: Configure inetRouter
+  hosts: inetRouter
+  become: true
+
+  tasks:
+    - name: set rules for iptables
+      template:
+        src: ir.iptables.rules
+        dest: /etc/iptables.rules
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: save rules
+      shell: iptables-restore < /etc/iptables.rules
+
+#Настройка CentralRouter
+- name: Configure CentralRouter
+  hosts: CentralRouter
+  become: yes
+
+  tasks:
+    - name: install epel
+      yum:
+        name: epel-release
+        state: present
+        update_cache: yes
+
+    - name: install app
+      yum:
+        name: knock
+        state: present
+        update_cache: yes
+
+    - name: Disable default route
+      lineinfile:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+        line: DEFROUTE=No
+    
+    - name: Default gateway for connected to inetRouter
+      lineinfile:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+        line: GATEWAY=192.168.255.1
+
+    - name: restart network
+      service:
+        name: network
+        state: restarted
+
+#Настройка InetRouter2
+- name: Configure inetRouter2
+  hosts: inetRouter2
+  become: true
+  tasks:
+    - name: configure iptables
+      template:
+        src: ir2.iptables.rules
+        dest: /etc/iptables.rules
+        owner: root
+        group: root
+        mode: '0644'
+        
+    - name: Disable default route
+      lineinfile:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+        line: DEFROUTE=No
+
+    - name: Default gateway for connected to inetRouter
+      lineinfile:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+        line: GATEWAY=192.168.255.1
+
+    - name: Add route
+      template:
+        src: ir2.route
+        dest: /etc/sysconfig/network-scripts/route-eth1
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: restart network
+      service:
+        name: network
+        state: restarted
+
+ #Настройка CentralServer   
+- name: config CentralServer
+  hosts: CentralServer
+  become: true
+  tasks:
+    - name: install epel
+      yum:
+        name: epel-release
+        state: present
+        update_cache: yes
+    
+    - name: install nginx
+      yum:
+        name: nginx
+        state: present
+        update_cache: yes
+    
+    - name: started NGINX
+      service:
+        name: nginx
+        enabled: yes
+        state: started
+
+    - name: Disable default route
+      lineinfile:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+        line: DEFROUTE=No
+    
+    - name: Default gateway for connected to CentralRouter
+      lineinfile:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+        line: GATEWAY=192.168.0.1
+
+    - name: restart network
+      service:
+        name: network
+        state: restarted
