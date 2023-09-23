@@ -45,3 +45,5 @@ Last login: Sat Sep 23 14:43:29 2023 from 192.168.56.1
 <p>CentralServer находится в общей подсети с CentralRouter, который в свою очередь находится в общей подсети с InetRouter2. В правилах iptables на InetRouter2 установлена переадресация пакетов с 8080 на 80 CentralServer. В свою очередь мы пробросили порт 8080 на порт 2345 локальной машины. Теперь если с нее зайти по адресу: 127.0.0.1:2345, то попадем на 80 порт CentralServer</p>
 
 <img src='ScreenShots/nginx.png'>
+
+<p>P.S. Запускать сначала Vagrant потом ansible</p>
