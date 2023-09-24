@@ -1,0 +1,20 @@
+---
+
+- name: Configure symmetric routing
+  hosts: router2
+  become: yes
+
+  tasks: 
+    - name: set up OSFP
+      template: 
+        src: frr.conf.cost.router2
+        dest: /etc/frr/frr.conf
+        owner: frr
+        group: frr
+        mode: 0640
+
+    - name: restart FRR
+      service:
+        name: frr
+        state: restarted
+        enabled: true
