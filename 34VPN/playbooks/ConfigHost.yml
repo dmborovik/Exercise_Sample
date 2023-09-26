@@ -1,0 +1,95 @@
+---
+
+- name: Config hosts
+  hosts: all 
+  become: true 
+
+  tasks:
+
+    - name: Install Epel
+      yum:
+        name: epel-release
+        state: present
+        update_cache: yes
+
+    - name: Install APP
+      yum:
+        name:
+          - openvpn
+          - iperf3
+        state: present
+        update_cache: yes
+    
+    - name: Disable Selinux
+      selinux:
+        state: disabled
+      register: selinuxdisabled
+  
+    - name: reboot and apply configuration Selinux
+      reboot: 
+        reboot_timeout: 3600
+      when: selinuxdisabled is changed
+
+    - name: set secret.key for server
+      template:
+        src: static.key
+        dest: /etc/openvpn/static.key
+        owner: root
+        group: root
+        mode: 0600
+
+
+- name: Config OpenVPN Server
+  hosts: server
+  become: true 
+  tasks:
+ 
+    - name: set config for server
+      template:
+        #src: tap.server.conf 
+        src: tun.server.conf #закомментировать строку выше и раскомментировать эту, для tun.  
+        dest: /etc/openvpn/server.conf
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: set Unit for OpenVPN
+      template:
+        src: openvpn@.service
+        dest: /etc/systemd/system/openvpn@.service
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: daemon-reload
+      systemd:
+        daemon_reload: true
+
+    - name: start and enable service OpenVPN
+      service:
+        name: openvpn@server
+        state: started
+        enabled: true
+
+- name: Configure OpenVPN client
+  hosts: client
+  become: yes
+  tasks:
+
+    - name: set config for client
+      template:
+        #src: tap.client.conf
+        src: tun.client.conf #закомментировать строку выше и раскомментировать эту, для tun. 
+        dest: /etc/openvpn/server.conf
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: Start and enable openvpn service
+      service:
+        name: openvpn@server
+        state: started
+        enabled: true
+
+
+        
