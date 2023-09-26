@@ -11,7 +11,7 @@
     <li>Поднять RAS на базе OpenVPN с клиентскими сертификтами, подключиться с локальной машины на виртуалку.</p>
 </ul>
 
-<p><a src='Vagrantfile'>Vagrantfile</a> - создание тестового стенда.</p>
+<p><a src='./Vagrantfile'>Vagrantfile</a> - создание тестового стенда.</p>
 <p><a src='playbooks'>playbooks</a>- плэи для оконччательной настройки</p>
 <p><a src='playbooks/openvpn'>openvpn</a> - каталог с файлами для настройки RAS на базе openVPN </p>
 <h2>TUN/TAP режимы VPN</h2>
