@@ -79,7 +79,7 @@ PING 192.168.255.2 (192.168.255.2) 56(84) bytes of data.
 64 bytes from 192.168.255.2: icmp_seq=2 ttl=64 time=0.486 ms
 64 bytes from 192.168.255.2: icmp_seq=3 ttl=64 time=0.424 ms
 </pre>
-<p> И в это время отключим ожин порт на centralRouter</p>
+<p> И в это время отключим один порт на centralRouter</p>
 <pre>64 bytes from 192.168.255.2: icmp_seq=95 ttl=64 time=0.803 ms
 64 bytes from 192.168.255.2: icmp_seq=96 ttl=64 time=0.749 ms
 64 bytes from 192.168.255.2: icmp_seq=97 ttl=64 time=0.747 ms
