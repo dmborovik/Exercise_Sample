@@ -1,0 +1,69 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  
+    config.vm.provision "ansible" do |ansible|
+      #ansible.verbose = "vvv"
+      ansible.playbook = "provisioning/provision.yml"
+      ansible.become = "true"
+      ansible.inventory_path = "provisioning/hosts"
+    end
+ 
+    config.vm.define "inetRouter" do |ir|
+      ir.vm.box = "centos/7"
+      ir.vm.hostname = "inetRouter"
+      ir.vm.network "private_network", adapter: 2, auto_config: false, virtualbox__intnet: "router-net"
+      ir.vm.network "private_network", adapter: 3, auto_config: false, virtualbox__intnet: "router-net"
+      ir.vm.network "private_network", ip: "192.168.56.10", adapter: 8
+    end
+
+    config.vm.define "centralRouter" do |cr|
+        cr.vm.box = "centos/7"
+        cr.vm.hostname = "centralRouter"
+        cr.vm.network "private_network", adapter: 2, auto_config: false, virtualbox__intnet: "router-net"
+        cr.vm.network "private_network", adapter: 3, auto_config: false, virtualbox__intnet: "router-net"
+        cr.vm.network "private_network", ip: "192.168.56.11", adapter: 8
+    end
+
+    config.vm.define "office1Router" do |or1|
+        or1.vm.box = "centos/7"
+        or1.vm.hostname = "office1Router"
+        or1.vm.network "private_network", adapter: 3, auto_config: false, virtualbox__intnet: "vlan1"
+        or1.vm.network "private_network", adapter: 4, auto_config: false, virtualbox__intnet: "vlan1"
+        or1.vm.network "private_network", adapter: 5, auto_config: false, virtualbox__intnet: "vlan2"
+        or1.vm.network "private_network", adapter: 6, auto_config: false, virtualbox__intnet: "vlan2"
+        or1.vm.network "private_network", ip: "192.168.56.20", adapter: 8
+    end
+
+    config.vm.define "testClient1" do |tc1|
+        tc1.vm.box = "centos/7"
+        tc1.vm.hostname = "testClient1"
+        tc1.vm.network "private_network", adapter: 2, auto_config: false, virtualbox__intnet: "testLAN"
+        tc1.vm.network "private_network", ip: "192.168.56.21", adapter: 8
+    end
+
+    config.vm.define "testServer1" do |ts1|
+        ts1.vm.box = "centos/7"
+        ts1.vm.hostname = "testServer1"
+        ts1.vm.network "private_network", adapter: 2, auto_config: false, virtualbox__intnet: "testLAN"
+        ts1.vm.network "private_network", ip: "192.168.56.22", adapter: 8
+    end
+
+    config.vm.define "testClient2" do |tc2|
+        tc2.vm.box = "ubuntu/focal64"
+        tc2.vm.box_version = "20220411.2.0"
+        tc2.vm.hostname = "testClient2"
+        tc2.vm.network "private_network", adapter: 2, auto_config: false, virtualbox__intnet: "testLAN"
+        tc2.vm.network "private_network", ip: "192.168.56.31", adapter: 8
+    end
+
+    config.vm.define "testServer2" do |ts2|
+        ts2.vm.box = "ubuntu/focal64"
+        ts2.vm.box_version = "20220411.2.0"
+        ts2.vm.hostname = "testClient2"
+        ts2.vm.network "private_network", adapter: 2, auto_config: false, virtualbox__intnet: "testLAN"
+        ts2.vm.network "private_network", ip: "192.168.56.32", adapter: 8
+    end
+
+  end
