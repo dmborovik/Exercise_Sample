@@ -1,0 +1,115 @@
+---
+
+- name: Set FreeIPA server
+  hosts: ipa.otus.lan
+  become: true
+
+  tasks:
+
+  - name: set timezone
+    timezone:
+      name: "Europe/Moscow"
+
+  - name: Install chrony
+    yum:
+      name:
+        - chrony
+      state: present
+      update_cache: true
+
+  - name: Start and enable chrony
+    service:
+      name: chronyd
+      state: started
+      enabled: true
+
+  - name: Disable and stop firewall
+    service:
+      name: firewalld
+      state: stopped
+      enabled: false
+
+  - name: Disable Selinux
+    selinux:
+      state: disabled
+    register: selinux
+
+  - name: reboot for apply set selinux
+    reboot:
+      reboot_timeout: 3600
+    when: selinux is changed
+
+  - name: set /etc/hosts
+    template:
+      src: ipa-hosts.j2
+      dest: /etc/hosts
+      owner: root
+      group: root
+      mode: 644
+
+  - name: install freeIPA
+    yum:
+      name:
+        - ipa-server
+        - nss*
+      state: present
+      update_cache: true
+
+# Настройка клиентов
+
+- name: Base set up
+  hosts: clients
+  become: true
+  tasks:
+
+  - name: install softs on CentOS
+    yum:
+      name:
+        - vim
+        - chrony
+      state: present
+      update_cache: true
+  
+  - name: disable firewalld
+    service:
+      name: firewalld
+      state: stopped
+      enabled: false
+  
+  - name: disable SElinux
+    selinux:
+      state: disabled
+    register: selinux
+
+  - name: reboot for apply set selinux
+    reboot:
+      reboot_timeout: 3600
+    when: selinux is changed
+
+  - name: Set up timezone
+    timezone:
+      name: "Europe/Moscow"
+  
+  - name: enable chrony
+    service:
+      name: chronyd
+      state: restarted
+      enabled: true
+  
+  - name: change /etc/hosts
+    template:
+      src: client-hosts.j2
+      dest: /etc/hosts
+      owner: root
+      group: root
+      mode: 0644
+  
+  - name: install module ipa-client
+    yum:
+      name:
+        - freeipa-client
+      state: present
+      update_cache: true
+  
+  - name: add host to ipa-server
+    shell: echo -e "yes\nyes" | ipa-client-install --mkhomedir --domain=OTUS.LAN --server=ipa.otus.lan --no-ntp -p admin -w 488168575
