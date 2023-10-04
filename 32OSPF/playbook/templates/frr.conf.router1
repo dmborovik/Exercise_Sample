@@ -9,7 +9,7 @@ interface enp0s8
  description r1-r2
  ip address 10.0.10.1/30
  ip ospf mtu-ignore
- ip ospf cost 1000
+ !ip ospf cost 1000
  ip ospf hello-interval 10
  ip ospf dead-interval 30
 
@@ -17,7 +17,7 @@ interface enp0s9
  description r1-r3
  ip address 10.0.12.1/30
  ip ospf mtu-ignore
- ip ospf cost 45
+ !ip ospf cost 45
  ip ospf hello-interval 10
  ip ospf dead-interval 30
 

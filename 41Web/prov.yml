@@ -1,0 +1,81 @@
+---
+- name: Deploy Web
+  hosts: DynamicWeb 
+  become: yes 
+  gather_facts: false
+  tasks: 
+
+  - name: Install docker packages 
+    apt:
+      name: "{{ item }}"
+      state: present
+      update_cache: yes
+    with_items:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    tags:
+      - docker
+  
+  - name: Add Docker s official GPG key
+    become: yes
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+    tags:
+      - docker
+
+  - name: Verify that we have the key with the fingerprint
+    become: yes    
+    apt_key:
+      id: 0EBFCD88
+      state: present
+    tags:
+      - docker
+  
+  - name: Set up the stable repository
+    become: yes    
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+      state: present
+      update_cache: yes
+    tags:
+      - docker
+  
+  - name: Update apt packages
+    become: yes    
+    apt:
+      update_cache: yes
+    tags:
+      - docker
+  - name: Install docker 
+    become: yes    
+    apt:
+      name: docker-ce
+      state: present
+      update_cache: yes
+    tags:
+      - docker
+  - name: Add remote "vagrant" user to "docker" group
+    become: yes
+    user:
+      name: vagrant
+      group: "docker"
+      append: yes
+    tags:
+      - docker 
+  - name: Install docker-compose 
+    become: yes
+    get_url:
+      url : https://github.com/docker/compose/releases/download/v2.22.0/docker-compose-linux-x86_64
+      dest: /usr/local/bin/docker-compose
+      mode: 0777
+  - name: Copy project 
+    copy: src=project dest=/home/vagrant
+  - name: reset ssh connection 
+    meta: reset_connection
+  - name: Run container
+    shell:
+      cmd: "docker-compose -f docker-compose.yml up -d"
+      chdir: /home/vagrant/project
