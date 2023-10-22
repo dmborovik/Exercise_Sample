@@ -1,0 +1,113 @@
+---
+
+- name: Config Replica mysql
+  hosts: all
+  vars:
+    root_password: "Dd488168575!"
+    repl_user_pass: "Ee488168575!"
+  become: true
+  
+  tasks:
+
+  - name: Install repo
+    yum:
+      name: 
+        - https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+        - epel-release
+      state: present
+      update_cache: yes
+
+  - name: Install percona-server and needed packages for provision 
+    yum:
+      name: 
+        - Percona-Server-server-57
+        - python2-PyMySQL
+      state: present
+      update_cache: yes
+
+  - name: copy config
+    template:
+      src: conf.d/{{ item }}
+      dest: /etc/my.cnf.d/{{ item }}
+    with_items:
+      - 01-base.cnf
+      - 02-max-connections.cnf
+      - 03-performance.cnf
+      - 04-slow-query.cnf
+      - 05-binlog.cnf
+
+  - name: copy my.cnf
+    copy:
+      src: ./my.cnf
+      dest: ~/.my.cnf
+  
+  - name: start mySQL
+    service:
+      name: mysql
+      state: started
+      enabled: true
+
+  - name: Get generated mysql password
+    ansible.builtin.shell: "cat /var/log/mysqld.log | grep 'root@localhost:' | awk '{print $11}'"
+    register: default_pass
+
+  - name: Change MySQL root password
+    ansible.builtin.shell: "mysql -u root -p'{{ default_pass.stdout }}' --connect-expired-password -e \"ALTER USER USER() IDENTIFIED BY '{{ root_password }}';\""
+
+- name: Config Master
+  hosts: master
+  become: true
+  vars:
+    root_password: "Dd488168575!"
+    repl_user_pass: "Ee488168575!"
+  tasks:
+
+  - name: copy dump base
+    copy:
+      src: ./bet.dmp
+      dest: ~/
+      
+  - name: Create Database
+    mysql_db: 
+      name: bet
+      state: present
+      login_user: root
+      login_password: "{{ root_password }}"
+
+  - name: restore Database from dump
+    mysql_db:
+      name: bet
+      state: import
+      target: ~/bet.dmp
+    when: inventory_hostname == 'master'
+
+  - name: create user for replication
+    mysql_user:
+      name: repl
+      password: "{{ repl_user_pass }}"
+      priv: "*.*:REPLICATION SLAVE"
+      host: "%"
+
+- name: config Slave
+  hosts: slave
+  become: true
+  vars:
+    root_password: "Dd488168575!"
+    repl_user_pass: "Ee488168575!"
+  tasks:
+
+  - name: set primary server
+    mysql_replication:
+      mode: changeprimary
+      primary_host: 192.168.56.150
+      primary_user: repl
+      primary_password: "{{ repl_user_pass }}"
+      primary_auto_position: true
+
+  - name: Start replication
+    community.mysql.mysql_replication:
+      mode: startreplica
+      
+
+
+
