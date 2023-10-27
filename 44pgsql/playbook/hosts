@@ -1,0 +1,6 @@
+[barman]
+barman ansible_host=192.168.56.13 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/barman/virtualbox/private_key
+
+[nodes]
+node1 ansible_host=192.168.56.11 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/node1/virtualbox/private_key listen_ip=192.168.56.11
+node2 ansible_host=192.168.56.12 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/node2/virtualbox/private_key listen_ip=192.168.56.12

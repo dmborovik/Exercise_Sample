@@ -1,0 +1,26 @@
+- name: config Postgres
+  hosts: all
+  become: yes
+  tasks:
+
+  - name: install base tools
+    dnf:
+      name:
+        - vim
+        - telnet
+      state: present
+      update_cache: true
+
+- name: install postgresql 14  and set up replication
+  hosts: nodes
+  become: yes
+  roles:
+    - install_postgres
+    - postgres_replication
+  
+- name: set up backup 
+  hosts: all
+  become: yes
+  roles:
+    - install_barman
+
