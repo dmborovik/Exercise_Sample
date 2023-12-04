@@ -1,0 +1,33 @@
+---
+# tasks file for log
+- name: config log server
+  block:
+
+    - name: set rsyslog.conf
+      template:
+        src: rsyslog.conf.j2
+        dest: /etc/rsyslog.conf
+    
+    - name: restart rsyslog daemon
+      systemd:
+        name: rsyslog
+        state: restarted
+        enabled: true
+
+  when: ansible_hostname == 'blm'
+
+- name: config log client
+  block:
+
+    - name: set rsyslog.conf
+      template:
+        src: client_rsyslog.conf
+        dest: /etc/rsyslog.conf
+
+    - name: restart rsyslog daemon
+      systemd:
+        name: rsyslog
+        state: restarted
+        enabled: true
+
+  when: ansible_hostname != 'blm'

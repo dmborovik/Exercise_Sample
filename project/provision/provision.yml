@@ -1,0 +1,66 @@
+---
+- name: Config web-application with monitoring, balancer and backup
+  hosts: all
+  become: True
+  tasks:
+    - name: Install epel
+      yum: 
+        name: epel-release
+        state: present
+        update_cache: true
+    
+    - name: set timezone
+      timezone:
+        name: Europe/Moscow
+
+- name: config web
+  hosts: web
+  become: true 
+  roles:
+    - database
+    - nginx
+    - php
+    - wordpress
+  #tags: debug
+
+- name: config balancer
+  hosts: balancer
+  become: true
+  roles:
+    - nginx
+  #tags: debug
+
+- name: config Backup, Log, Monitoring server 
+  hosts: blm, web
+  become: True
+  roles:
+    - backup
+  #tags: debug
+
+- name: config logs
+  hosts: all
+  become: True
+  roles:
+    - log
+  #tags: debug
+
+- name: config monitoring
+  hosts: blm
+  become: True
+  roles:
+    - monitoring
+  #tags: debug
+
+- name: install node_exporter
+  hosts: web
+  become: True  
+  roles:
+    - node_exporter
+  #tags: debug
+
+- name: config routing
+  hosts: all
+  become: true
+  roles:
+    - routing
+  tags: debug

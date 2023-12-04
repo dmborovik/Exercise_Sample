@@ -1,0 +1,171 @@
+---
+# tasks file for backup
+- name: add group Borg
+  group:
+    name: borg
+    state: present
+
+- name: add Borg user
+  user:
+    name: borg
+    group: borg
+
+- name: create ssh_key directory
+  become_user: borg
+  file: 
+    path: ~/.ssh
+    state: directory
+    owner: borg
+    group: borg
+    mode: '0700'
+
+- name: Install Borg and dependies
+  yum: 
+    name: 
+      - borgbackup
+    state: present
+    update_cache: yes
+
+
+- name: Config backup server
+  block:
+
+    - name: disable SELINUX 
+      selinux:
+        state: disabled
+      register: selinux
+
+    - name: Ensure SELinux is set disable mode
+      lineinfile:
+        path: /etc/selinux/config
+        regexp: '^SELINUX='
+        line: SELINUX=disabled
+
+    - name: reboot for apply SELinux
+      reboot:
+        reboot_timeout: 3600
+      when: selinux is changed
+
+    - name: Create Backup directory
+      file:
+        path: /var/backup
+        state: directory
+        owner: borg
+        group: borg
+        mode: '0755'
+
+    - name: Create file system 
+      filesystem: 
+        fstype: xfs
+        dev: /dev/sdb
+
+    - name: add backup directory to fstab
+      mount:
+        path: /var/backup
+        src: /dev/sdb
+        fstype: xfs
+        state: present
+
+    - name: mount backup directory
+      shell: "mount -a"
+
+    - name: set permission for backup directory
+      shell: "chown borg:borg /var/backup"
+
+    - name: set root ssh-key
+      template:
+        src: id_rsa.pub
+        dest: /root/.ssh/authorized_keys
+        owner: borg
+        group: borg
+        mode: '0600'
+
+    - name: set borg ssh-key
+      template:
+        src: id_rsa.pub
+        dest: /home/borg/.ssh/authorized_keys
+        owner: borg
+        group: borg
+        mode: '0600'
+
+  when: ansible_hostname == 'blm'
+
+- name: config client server
+  block: 
+
+    - name: Disable strict host check
+      ansible.builtin.lineinfile:
+        path: "/etc/ssh/ssh_config"
+        line: "StrictHostKeyChecking no"
+      notify: restart_sshd
+
+    - name: make dir for backup database
+      file:
+        path: /var/www/html/{{ http_host }}/db_backup/
+        state: directory
+
+    - name: set action to dump database in cron every 15 miniutes
+      cron:
+        name: "dump database"
+        minute: "*/15"
+        job: mysqldump --defaults-extra-file=/root/.my.cnf wordpress --set-gtid-purged=OFF | gzip > `date +/var/www/html/my.web.app/db_backup/backupdb_wordpress_\%Y\%m\%d.\%H\%M\%S.sql.gz`
+
+    - name: set action for delete old dumps
+      cron:
+        name: "delete old dump"
+        minute: "*/15"
+        job: find /var/www/html/{{ http_host }}/db_backup/ -type f -mmin +60 -delete
+
+    - name: set ssh-key root for borg
+      template:
+        src: id_rsa
+        dest: /root/.ssh/id_rsa
+        owner: borg
+        group: borg
+        mode: "0600"
+
+    - name: set ssh-key for borg
+      template:
+        src: id_rsa
+        dest: /home/borg/.ssh/id_rsa
+        owner: borg
+        group: borg
+        mode: "0600"
+
+    - name: Init borg repository
+      become_user: borg
+      shell: 'borg init --encryption=none borg@192.168.255.100:/var/backup/web/'
+      ignore_errors: true
+
+    - name: add backup service
+      template:
+        src: borg-backup.service
+        dest: /etc/systemd/system/borg-backup.service
+        mode: '0644'
+      register: backup_service
+
+    - name: add backup timer
+      template: 
+        src: borg-backup.timer
+        dest: /etc/systemd/system/borg-backup.timer
+        mode: '0644'
+      register: backup_timer
+    
+    - name: Reload daemon 
+      systemd:
+        daemon_reload: true
+      when: backup_service or backup_timer is changed
+
+    - name: start and enable borg-backup.timer
+      systemd:
+        name: borg-backup.timer
+        state: started
+        enabled: true
+
+
+    - name: start and enable backup service
+      systemd:
+        name: borg-backup.service
+        state: started
+ 
+  when: ansible_hostname == 'web1'

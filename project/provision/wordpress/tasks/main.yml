@@ -1,0 +1,46 @@
+---
+# tasks file for wordpress
+- name: Install prerequisites
+  yum:
+    name: 
+      - wget
+      - policycoreutils-python
+    state: present
+    update_cache: true
+
+- name: Create document root
+  file: 
+    path: /var/www/html/{{ http_host }}/
+    state: directory
+    owner: "nginx"
+    mode: 0755
+
+- name: Download and unpack latest Wordpress
+  unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: "/var/www/html/{{ http_host }}/"
+    remote_src: yes
+    creates: "/var/www/html/{{ http_host }}/wordpress"
+
+- name: set up wp-config
+  template:
+    src: wp-config.php.j2
+    dest: "/var/www/html/{{ http_host }}/wordpress/wp-config.php"
+
+- name: set permission for files
+  shell: "chown -R nginx: /var/www/html/{{ http_host }}"
+
+- name: set selinux context
+  community.general.sefcontext:
+    target: '/var/www/html/{{ http_host }}(/.*)'
+    setype: httpd_sys_content_t
+    state: present
+
+- name: Apply new SELinux file context to filesystem
+  ansible.builtin.command: restorecon -irv /var/www/html/{{ http_host }}
+
+- name: restart NGINX
+  service:
+    name: nginx
+    state: restarted
+    enabled: true

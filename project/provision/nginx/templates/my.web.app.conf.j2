@@ -1,0 +1,24 @@
+server {
+    listen 80;
+    server_name {{ http_host }};
+    root /var/www/html/{{ http_host }}/wordpress;
+    index index.php;
+
+location / {
+    try_files $uri $uri/ /index.php?$args;
+}
+
+location ~ \.php$ {
+    include fastcgi_params;
+    fastcgi_pass unix:/run/php-fpm/php-fpm.sock;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+    access_log /var/log/nginx/{{ http_host }}.access.log;
+    access_log syslog:server=192.168.255.100:514,tag={{ ansible_hostname }}_nginx_access,severity=info combined;
+    error_log /var/log/nginx/{{ http_host }}.error.log;
+    error_log syslog:server=192.168.255.100:514,tag={{ ansible_hostname }}_nginx_error;
+    
+
+}
+}
+

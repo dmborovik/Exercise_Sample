@@ -1,0 +1,38 @@
+---
+# tasks file for nginx
+
+- name: Install NGINX
+  yum:
+    name: nginx
+    state: latest
+    update_cache: true
+
+- name: set nginx config
+  template:
+    src: "{{ http_host }}.conf.j2"
+    dest: /etc/nginx/conf.d/{{ http_host }}.conf
+  when: (base_role == 'master') or (base_role == 'slave')
+
+- name: config balancer
+  block:
+  
+    - name: copy cert for ssl
+      copy:
+        src: "{{ item }}"
+        dest: /etc/nginx/ssl/{{ http_host }}/
+      with_items:
+        - server.crt
+        - server.key
+    
+    - name: set config for balancer
+      template:
+        src: "balancer.conf.j2"
+        dest: /etc/nginx/conf.d/{{ http_host }}.conf
+  
+  when: base_role=='balancer'
+
+- name: restart NGINX
+  service:
+    name: nginx
+    state: restarted
+    enabled: true

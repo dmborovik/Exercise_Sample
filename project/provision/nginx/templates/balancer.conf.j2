@@ -1,0 +1,27 @@
+upstream {{ http_host}} {
+    server 192.168.255.10;
+    server 192.168.255.11;
+}
+
+server {
+    listen 80;
+    listen 443 ssl; 
+
+    server_name {{ http_host }};
+    
+    #ssl on;
+    ssl_certificate          /etc/nginx/ssl/{{ http_host }}/server.crt;
+    ssl_certificate_key      /etc/nginx/ssl/{{ http_host }}/server.key;
+
+    access_log syslog:server=192.168.255.100:514,tag={{ ansible_hostname }}_nginx_access,severity=info combined;
+    error_log syslog:server=192.168.255.100:514,tag={{ ansible_hostname }}_nginx_error;
+
+    location / {
+        proxy_pass http://{{ http_host }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+    }
+}

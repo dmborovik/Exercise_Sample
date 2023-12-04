@@ -1,0 +1,12 @@
+[routers]
+router ansible_host=192.168.56.15 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/router/virtualbox/private_key
+
+[web]
+web1 ansible_host=192.168.56.20 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/web1/virtualbox/private_key base_role=master
+web2 ansible_host=192.168.56.21 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/web2/virtualbox/private_key base_role=slave
+
+[balancers]
+balancer ansible_host=192.168.56.22 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/balancer/virtualbox/private_key base_role=balancer
+
+[service]
+blm ansible_host=192.168.56.23 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/blm/virtualbox/private_key base_role=balancer

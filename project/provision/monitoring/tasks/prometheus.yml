@@ -1,0 +1,68 @@
+---
+- name: create prometheus user groups
+  group:
+    name: prometheus
+    state: present
+  
+- name: creating prometheus user
+  user:
+    name: prometheus
+    group: prometheus
+    system: yes
+    shell: "/sbin/nologin"
+    comment: "prometheus nologin user"
+    createhome: "no"
+    state: present
+
+- name: Download prometheus
+  unarchive: 
+    src: https://github.com/prometheus/prometheus/releases/download/v2.48.0/prometheus-2.48.0.linux-amd64.tar.gz
+    dest: /tmp/
+    remote_src: yes
+
+- name: copy prometheus file to bin
+  copy:
+    src: "/tmp/prometheus-2.48.0.linux-amd64/prometheus"
+    dest: "/usr/local/bin/prometheus"
+    owner: prometheus
+    group: prometheus
+    remote_src: yes
+    mode: 0755
+
+- name: creates data directory
+  file:
+    path: "/data/prometheus/"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: 0755
+
+- name: create config directory
+  file:
+    path: "/etc/prometheus/"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: 0755
+
+- name: set config 
+  template:
+    src: prometheus.conf.j2
+    dest: /etc/prometheus/prometheus.yml
+
+- name: config alert file
+  copy:
+    src: "files/alertrules.yml"
+    dest: /etc/prometheus/alert.rules.yml
+
+- name: Set systemd service for prometheus
+  template:
+    src: init.service.j2
+    dest: /etc/systemd/system/prometheus.service
+  notify: systemd_reload
+
+- name: Start prometheus service
+  service:
+    name: prometheus
+    state: started
+    enabled: yes

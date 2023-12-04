@@ -1,0 +1,19 @@
+---
+- name: Install grafana
+  yum:
+    name: https://dl.grafana.com/enterprise/release/grafana-enterprise-10.2.2-1.x86_64.rpm
+    state: latest
+  ignore_errors: true
+
+# - name: "Grafana configuration file copy"
+#   template:
+#     src: "grafana.conf.j2"
+#     dest: /etc/grafana/grafana.ini
+#   notify: event_restart_grafana
+
+- name: "Grafana server started"
+  service:
+    name: grafana-server
+    enabled: true
+    state: started
+  

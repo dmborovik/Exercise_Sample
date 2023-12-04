@@ -1,0 +1,55 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  
+    ###Router####
+    config.vm.define "router" do |router|
+      router.vm.box = "centos/7"
+      router.vm.hostname = "router"
+      router.vm.network "private_network", ip: "192.168.255.1", adapter: 2, virtualbox__intnet: "internal-net"
+      router.vm.network "private_network", ip: "192.168.56.15", adapter: 8
+    end
+    ###First master server###
+    config.vm.define "web1" do |web1|
+        web1.vm.box = "centos/7"
+        web1.vm.hostname = "web1"
+        web1.vm.network "private_network", ip: "192.168.255.10", adapter: 2, virtualbox__intnet: "internal-net"
+        web1.vm.network "private_network", ip: "192.168.56.20", adapter: 8
+    end
+    ###Second slave server###
+    config.vm.define "web2" do |web2|
+        web2.vm.box = "centos/7"
+        web2.vm.hostname = "web2"
+        web2.vm.network "private_network", ip: "192.168.255.11", adapter: 2, virtualbox__intnet: "internal-net"
+        web2.vm.network "private_network", ip: "192.168.56.21", adapter: 8
+    end
+    ###Server balancer###
+    config.vm.define "balancer" do |bl|
+        bl.vm.box = "centos/7"
+        bl.vm.hostname = "balancer"
+        bl.vm.network "private_network", ip: "192.168.255.12", adapter: 2, virtualbox__intnet: "internal-net"
+        bl.vm.network "private_network", ip: "192.168.56.22", adapter: 8
+    end
+    ### Backup, Log, Monitoring###
+    config.vm.define "blm" do |blm|
+        blm.vm.provider :virtualbox do |vb|
+            vb.customize ["storagectl", :id, "--name", "SATA", "--add", "sata" ]
+            unless File.exist?("sata1.vdi")
+                vb.customize ["createhd", "--filename", "sata1.vdi", "--size", 5*1024, "--format", "VDI"]
+            end
+            vb.customize ["storageattach", :id, "--storagectl", "SATA", "--port", "2", "--device", "0", "--type", "hdd", "--medium", "sata1.vdi"]
+        end
+        blm.vm.box = "centos/7"
+        blm.vm.hostname = "blm"
+        blm.vm.network "private_network", ip: "192.168.255.100", adapter: 2, virtualbox__intnet: "internal-net"
+        blm.vm.network "private_network", ip: "192.168.56.23", adapter: 8
+    end
+    
+    config.vm.provision "shell", inline: <<-SHELL
+            mkdir -p ~root/.ssh; cp ~vagrant/.ssh/auth* ~root/.ssh
+            sed -i '65s/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+            systemctl restart sshd
+          SHELL
+    
+end

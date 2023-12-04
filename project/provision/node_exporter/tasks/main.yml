@@ -1,0 +1,42 @@
+---
+# tasks file for node_exporter
+- name: Creating node_exporter user group
+  group: name="node_exporter"
+  become: true
+
+- name: Creating node_exporter user
+  user:
+    name: "node_exporter"
+    group: "node_exporter"
+    system: yes
+    shell: "/sbin/nologin"
+    comment: "node_exporter nologin User"
+    createhome: "no"
+    state: present
+
+- name: Install prometheus node exporter
+  unarchive:
+    src: "https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+
+- name: Copy prometheus node exporter file to bin
+  copy:
+    src: "/tmp/node_exporter-1.7.0.linux-amd64/"
+    dest: "/usr/local/bin/node_exporter"
+    owner: "node_exporter"
+    group: "node_exporter"
+    remote_src: yes
+    mode: 0755
+
+- name: Copy systemd init file
+  template:
+    src: init.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+  notify: systemd_reload
+
+- name: Start node_exporter service
+  service:
+    name: node_exporter
+    state: started
+    enabled: yes

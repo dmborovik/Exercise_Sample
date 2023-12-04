@@ -1,0 +1,63 @@
+---
+
+- name: Creating alertmanager user group
+  group:
+    name: alertmanager
+
+- name: Creating alertmanager user
+  user:
+    name: alertmanager
+    group: alertmanager
+    system: yes 
+    shell: "/sbin/nologin"
+    comment: "alertmanager nologin user"
+    createhome: "no"
+    state: present
+
+- name: Download alertmanager 
+  unarchive:
+    src: "https://github.com/prometheus/alertmanager/releases/download/v0.26.0/alertmanager-0.26.0.linux-amd64.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+
+- name: Copy alertmanager executable to bin
+  copy:
+    src: "/tmp/alertmanager-0.26.0.linux-amd64/alertmanager"
+    dest: "/usr/local/bin/alertmanager"
+    owner: alertmanager
+    group: alertmanager
+    remote_src: yes
+    mode: 0755
+
+- name: creates data directory
+  file:
+    path: "/data/alertmanager/"
+    state: directory
+    owner: alertmanager
+    group: alertmanager
+    mode: 0755
+
+- name: creates config directory 
+  file:
+    path: "/etc/alertmanager/"
+    state: directory
+    owner: alertmanager
+    group: alertmanager
+    mode: 0755
+
+- name: Copy config file
+  copy:
+    src: files/alertmanager.yml
+    dest: /etc/alertmanager/alertmanager.yml
+
+- name: Copy systemd unit file
+  template:
+    src: alertmanager.service.j2
+    dest: /etc/systemd/system/alertmanager.service
+  notify: systemd_reload
+
+- name: Start alertmanager service
+  service:
+    name: alertmanager
+    state: started
+    enabled: yes

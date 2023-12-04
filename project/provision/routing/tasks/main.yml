@@ -1,0 +1,71 @@
+---
+# tasks file for routing
+
+- name: config router 
+  block:
+    - name: install iptables
+      yum: 
+        name: 
+          - iptables
+          - iptables-services
+        state: present
+        update_cache: yes
+    
+    # - name: set iptable-rules
+    #   template:
+    #     src: iptables.conf
+    #     dest: /etc/sysconfig/iptables
+    #     owner: root
+    #     group: root
+    #     mode: 0600
+    
+    - name: start and enable iptables
+      service: 
+        name: iptables
+        state: restarted
+        enabled: true
+    
+    - name: set forwarding
+      sysctl:
+        name: net.ipv4.conf.all.forwarding
+        value: '1'
+        state: present
+    
+    - name: set static route
+      template:
+        src: route-eth1
+        dest: /etc/sysconfig/network-scripts/route-eth1
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart_network
+
+    # - name: disable default route
+    #   lineinfile:
+    #     dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+    #     line: DEFROUTE=NO
+    #   notify: restart_network
+
+    # - name: set default route to router
+    #   lineinfile: 
+    #     dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+    #     line: GATEWAY=192.168.56.15
+    #   notify: restart_network
+
+  when: ansible_hostname == "router"
+
+- name: config hosts 
+  block:
+    - name: disable default route
+      lineinfile:
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+        line: DEFROUTE=NO
+      notify: restart_network
+
+    - name: set default route to router
+      lineinfile: 
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+        line: GATEWAY=192.168.255.1
+      notify: restart_network
+
+  when: ansible_hostname != "router"

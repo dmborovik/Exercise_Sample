@@ -1,0 +1,5 @@
+---
+# handlers file for backup
+- name: Reload systemd
+  command: systemctl restart sshd
+  listen: restart_sshd

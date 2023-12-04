@@ -1,0 +1,90 @@
+---
+# tasks file for database
+- name: Install repo 
+  yum:
+    name:
+      - https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+    state: present
+    update_cache: true
+
+- name: Install percona-server and packages for provision
+  yum:
+    name: 
+      - Percona-Server-server-57
+      - python2-PyMySQL
+    state: present
+    update_cache: yes
+
+- name: set config for base
+  template:
+    src: conf.d/{{ item }}
+    dest: /etc/my.cnf.d/{{ item }}
+  with_items:
+    - 01-base.cnf
+    - 02-max-connections.cnf
+    - 03-performance.cnf
+    - 04-slow-query.cnf
+    - 05-binlog.cnf
+
+- name: set my.cnf
+  template:
+    src: my.cnf
+    dest: ~/.my.cnf
+
+- name: start MySQL
+  service:
+    name: mysql
+    state: started
+    enabled: true
+
+- name: Get generated mysql password
+  shell: "cat /var/log/mysqld.log | grep 'root@localhost:' | awk '{print $11}'"
+  register: default_pass
+
+- name: Change default root password
+  shell: "mysql -u root -p'{{ default_pass.stdout }}' --connect-expired-password -e \"ALTER USER USER() IDENTIFIED BY '{{ mysql_root_pass }}';\""
+  ignore_errors: True
+
+- name: Configure master
+  block:
+
+    - name: Create database
+      mysql_db:
+        name: "{{ mysql_db }}"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_pass }}"
+
+    - name: Create user for replication
+      mysql_user:
+        name: "{{ mysql_repl_user }}"
+        password: "{{ mysql_repl_pass }}"
+        priv: "*.*:REPLICATION SLAVE"
+        host: "%"
+    
+    - name: Create user for wordpress
+      mysql_user:
+        name: "{{ mysql_wp_user }}"
+        password: "{{ mysql_wp_pass }}"
+        priv: "{{ mysql_db }}.*:ALL"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_pass }}"
+  when: base_role == 'master'
+
+- name: Configure slave
+  block:
+    - name: set primary server
+      mysql_replication:
+        mode: changeprimary
+        primary_host: 192.168.255.10
+        primary_user: "{{ mysql_repl_user }}"
+        primary_password: "{{ mysql_repl_pass }}"
+        primary_auto_position: True
+      ignore_errors: True
+    
+    - name: Start replication
+      mysql_replication:
+        mode: startreplica
+
+  when: base_role == 'slave'

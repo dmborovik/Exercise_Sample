@@ -1,0 +1,10 @@
+---
+####MYSQL####
+mysql_root_pass: "Dd488168575!"
+mysql_db: "wordpress"
+mysql_wp_user: "wp_user"
+mysql_wp_pass: "Dd884168884!"
+mysql_repl_user: "repl"
+mysql_repl_pass: "Dd7744557d!"
+#####HOST#####
+http_host: my.web.app
